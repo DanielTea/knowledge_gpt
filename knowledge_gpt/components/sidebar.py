@@ -16,12 +16,12 @@ def set_openai_api_key(api_key: str):
 
 def sidebar():
     with st.sidebar:
-        st.markdown(
-            "## How to use\n"
-            "1. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) below🔑\n"  # noqa: E501
-            "2. Upload a pdf, docx, or txt file📄\n"
-            "3. Ask a question about the document💬\n"
-        )
+        # st.markdown(
+        #     "## How to use\n"
+        #     "1. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) below🔑\n"  # noqa: E501
+        #     "2. Upload a pdf, docx, or txt file📄\n"
+        #     "3. Ask a question about the document💬\n"
+        # )
         api_key_input = st.text_input(
             "OpenAI API Key",
             type="password",
@@ -41,12 +41,12 @@ def sidebar():
             "📖KnowledgeGPT allows you to ask questions about your "
             "documents and get accurate answers with instant citations. "
         )
-        st.markdown(
-            "This tool is a work in progress. "
-            "You can contribute to the project on [GitHub](https://github.com/mmz-001/knowledge_gpt) "  # noqa: E501
-            "with your feedback and suggestions💡"
-        )
-        st.markdown("Made by [mmz_001](https://twitter.com/mm_sasmitha)")
+        # st.markdown(
+        #     "This tool is a work in progress. "
+        #     "You can contribute to the project on [GitHub](https://github.com/mmz-001/knowledge_gpt) "  # noqa: E501
+        #     "with your feedback and suggestions💡"
+        # )
+        # st.markdown("Made by [mmz_001](https://twitter.com/mm_sasmitha)")
         st.markdown("---")
 
         faq()
