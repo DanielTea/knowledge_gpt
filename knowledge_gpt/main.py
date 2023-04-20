@@ -34,7 +34,8 @@ uploaded_files = st.file_uploader(
 
 indexes = []
 document_names = []
-if uploaded_files is not None:
+
+if uploaded_files:
     for uploaded_file in uploaded_files:
         if uploaded_file.name.endswith(".pdf"):
             doc = parse_pdf(uploaded_file)
@@ -57,16 +58,21 @@ if uploaded_files is not None:
 
 query = st.text_area("Ask a question about the document", on_change=clear_submit)
 with st.expander("Advanced Options"):
-    show_all_chunks = st.checkbox("Show all chunks retrieved from vector search")
-    show_full_doc = st.checkbox("Show parsed contents of the document")
+    show_all_chunks = st.checkbox("Show all chunks retrieved from vector search", value=False)
+    show_full_doc = st.checkbox("Show parsed contents of the document", value=False)
 
-if show_full_doc and doc:
+doc = None
+if show_full_doc and uploaded_files:
+    doc = text_to_docs(doc)
+
     with st.expander("Document"):
         # Hack to get around st.markdown rendering LaTeX
         st.markdown(f"<p>{wrap_text_in_html(doc)}</p>", unsafe_allow_html=True)
 
+
 def has_low_probability(text: str) -> bool:
     return "<Probability: low>" in text
+
 
 button = st.button("Submit")
 if button or st.session_state.get("submit"):
@@ -84,7 +90,6 @@ if button or st.session_state.get("submit"):
                 # Output Columns
                 sources = search_docs(index, query)
                 answer = get_answer(sources, query)
-                # print(answer)
 
                 if not has_low_probability(answer["output_text"]):
                     st.markdown(f"### Document: {document_names[i]}")
@@ -97,6 +102,7 @@ if button or st.session_state.get("submit"):
                     with answer_col:
                         st.markdown("#### Answer")
                         st.markdown(answer["output_text"].split("SOURCES: ")[0])
+
 
                     with sources_col:
                         st.markdown("#### Sources")

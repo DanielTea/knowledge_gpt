@@ -1,6 +1,12 @@
 """Wrapper around OpenAI embedding models."""
 from typing import Any, Dict, List, Optional
 
+import concurrent.futures
+from tqdm import tqdm
+
+# Additional imports
+from typing import Tuple
+
 from langchain.embeddings.base import Embeddings
 from langchain.utils import get_from_dict_or_env
 from openai.error import APIConnectionError, APIError, RateLimitError, Timeout
@@ -92,19 +98,37 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         text = text.replace("\n", " ")
         return self.client.create(input=[text], engine=engine)["data"][0]["embedding"]
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_document_chunks(self, text: str, chunk_size: int = 2048) -> List[List[float]]:
+        """Embed a large document in chunks.
+
+        Args:
+            text: The document to embed.
+            chunk_size: The size of chunks to divide the document into.
+
+        Returns:
+            List of embeddings, one for each chunk.
+        """
+        # Split the document into chunks
+        chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
+
+        # Embed each chunk in parallel
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self._embedding_func, chunk, engine=self.document_model_name) for chunk in chunks]
+            embeddings = [future.result() for future in tqdm(concurrent.futures.as_completed(futures), total=len(chunks), desc="Embedding document chunks")]
+
+        return embeddings
+    
+    def embed_documents(self, texts: List[str], chunk_size: int = 2048) -> List[List[List[float]]]:
         """Call out to OpenAI's embedding endpoint for embedding search docs.
 
         Args:
             texts: The list of texts to embed.
+            chunk_size: The size of chunks to divide large documents into.
 
         Returns:
-            List of embeddings, one for each text.
+            List of embeddings for each document, where each document has a list of embeddings for its chunks.
         """
-        responses = [
-            self._embedding_func(text, engine=self.document_model_name)
-            for text in texts
-        ]
+        responses = [self.embed_document_chunks(text, chunk_size=chunk_size) for text in texts]
         return responses
 
     def embed_query(self, text: str) -> List[float]:
@@ -118,3 +142,16 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         """
         embedding = self._embedding_func(text, engine=self.query_model_name)
         return embedding
+
+    # def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    #         """Call out to OpenAI's embedding endpoint for embedding search docs.
+    #         Args:
+    #             texts: The list of texts to embed.
+    #         Returns:
+    #             List of embeddings, one for each text.
+    #         """
+    #         responses = [
+    #             self._embedding_func(text, engine=self.document_model_name)
+    #             for text in texts
+    #         ]
+    #         return responses
